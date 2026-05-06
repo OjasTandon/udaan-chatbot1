@@ -8,6 +8,10 @@ CORS(app)
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 
+@app.route("/")
+def home():
+    return "Udaan AI backend is running!"
+
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
