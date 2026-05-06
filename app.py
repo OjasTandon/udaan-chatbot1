@@ -12,39 +12,40 @@ OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
 def chat():
     try:
         data = request.get_json()
+        print("Incoming:", data)
+
         user_message = data.get("message", "")
 
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
             headers={
                 "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "https://your-site.onrender.com",
-                "X-Title": "Udaan School AI"
+                "Content-Type": "application/json"
             },
             json={
                 "model": "qwen/qwen3-coder:free",
                 "messages": [
-                    {
-                        "role": "system",
-                        "content": "You are a helpful assistant for Udaan Future School. Answer clearly and briefly."
-                    },
-                    {
-                        "role": "user",
-                        "content": user_message
-                    }
+                    {"role": "user", "content": user_message}
                 ]
             }
         )
 
+        print("Status:", response.status_code)
+        print("Raw response:", response.text)
+
         result = response.json()
-        reply = result.get("choices", [{}])[0].get("message", {}).get("content", "No response.")
+
+        reply = result.get("choices", [{}])[0].get("message", {}).get("content")
+
+        if not reply:
+            reply = "AI returned empty response."
 
         return jsonify({"reply": reply})
 
     except Exception as e:
-        print(e)
+        print("ERROR:", e)
         return jsonify({"reply": "Server error."}), 500
+
 
 
 if __name__ == "__main__":
