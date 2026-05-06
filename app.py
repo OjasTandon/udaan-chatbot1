@@ -1,51 +1,67 @@
-import os
-import requests
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+import requests
+import os
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # ✅ يسمح للفرونت إند بالاتصال (fixes CORS)
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+# 🔐 Put your OpenRouter API key here OR use environment variable
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "YOUR_API_KEY_HERE"
 
+# ✅ Health check route (important for Render)
 @app.route("/")
 def home():
-    return "Udaan AI backend is running!"
+    return "Udaan AI Backend Running ✅"
 
+# ✅ Chat route
 @app.route("/chat", methods=["POST"])
 def chat():
-    user_message = request.json.get("message")
-
-    response = requests.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        headers={
-            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-            "Content-Type": "application/json"
-        },
-        json={
-            "model": "openai/gpt-oss-120b:free",
-            "messages": [
-                {"role": "system", "content": "You are a helpful school assistant."},
-                {"role": "user", "content": user_message}
-            ]
-        }
-    )
-
-    data = response.json()
-    print("FULL RESPONSE:", data)  # 🔥 DEBUG
-
     try:
-        reply = data["choices"][0]["message"]["content"]
-    except:
-        reply = "⚠️ AI failed to respond"
+        data = request.get_json()
+        user_message = data.get("message", "")
 
-    return jsonify({"reply": reply})
+        print("Incoming:", user_message)
+
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "openai/gpt-oss-120b:free",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": "You are an AI assistant for Udaan Future School. Answer only school-related questions clearly, politely, and simply."
+                    },
+                    {
+                        "role": "user",
+                        "content": user_message
+                    }
+                ]
+            }
+        )
+
+        print("Status:", response.status_code)
+        print("Raw response:", response.text)
+
+        result = response.json()
+
+        # ✅ Safe extraction
+        if "choices" in result and len(result["choices"]) > 0:
+            reply = result["choices"][0]["message"]["content"]
+        else:
+            reply = "⚠️ No valid response from AI"
+
+        return jsonify({"reply": reply})
 
     except Exception as e:
-        print("ERROR:", e)
-        return jsonify({"reply": "Server error."}), 500
+        print("ERROR:", str(e))
+        return jsonify({"reply": f"⚠️ Server error: {str(e)}"})
 
-
-
+# ✅ Run locally
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
+    
