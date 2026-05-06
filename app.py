@@ -23,7 +23,7 @@ def chat():
                 "Content-Type": "application/json"
             },
             json={
-                "model": "qwen/qwen3-coder:free",
+                "model": "openai/gpt-oss-120b:free",
                 "messages": [
                     {"role": "user", "content": user_message}
                 ]
