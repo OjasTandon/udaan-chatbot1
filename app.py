@@ -14,37 +14,32 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
+    user_message = request.json.get("message")
+
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "model": "openai/gpt-oss-120b:free",
+            "messages": [
+                {"role": "system", "content": "You are a helpful school assistant."},
+                {"role": "user", "content": user_message}
+            ]
+        }
+    )
+
+    data = response.json()
+    print("FULL RESPONSE:", data)  # 🔥 DEBUG
+
     try:
-        data = request.get_json()
-        print("Incoming:", data)
+        reply = data["choices"][0]["message"]["content"]
+    except:
+        reply = "⚠️ AI failed to respond"
 
-        user_message = data.get("message", "")
-
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "openai/gpt-oss-120b:free",
-                "messages": [
-                    {"role": "user", "content": user_message}
-                ]
-            }
-        )
-
-        print("Status:", response.status_code)
-        print("Raw response:", response.text)
-
-        result = response.json()
-
-        reply = result.get("choices", [{}])[0].get("message", {}).get("content")
-
-        if not reply:
-            reply = "AI returned empty response."
-
-        return jsonify({"reply": reply})
+    return jsonify({"reply": reply})
 
     except Exception as e:
         print("ERROR:", e)
