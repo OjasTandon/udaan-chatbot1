@@ -10,18 +10,11 @@ CORS(app)  # ✅ يسمح للفرونت إند بالاتصال (fixes CORS)
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or "YOUR_API_KEY_HERE"
 
 # ✅ Health check route (important for Render)
-@app.route("/")
-def home():
-    return "Udaan AI Backend Running ✅"
-
-# ✅ Chat route
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
         data = request.get_json()
         user_message = data.get("message", "")
-
-        print("Incoming:", user_message)
 
         response = requests.post(
             "https://openrouter.ai/api/v1/chat/completions",
@@ -34,7 +27,7 @@ def chat():
                 "messages": [
                     {
                         "role": "system",
-                        "content": "You are an AI assistant for Udaan Future School. Answer only school-related questions clearly, politely, and simply."
+                        "content": "You are an AI assistant for Udaan Future School. Answer clearly and politely."
                     },
                     {
                         "role": "user",
@@ -44,31 +37,19 @@ def chat():
             }
         )
 
-        print("Status:", response.status_code)
-        print("Raw response:", response.text)
-
         result = response.json()
+        print("RAW:", result)  # debug
 
-        # ✅ Safe extraction
+        # ✅ Extract message
         if "choices" in result and len(result["choices"]) > 0:
             reply = result["choices"][0]["message"]["content"]
         else:
-            reply = "⚠️ No valid response from AI"
+            reply = "⚠️ AI did not return a valid answer"
 
-        # Extract reply properly
-    if "choices" in result and len(result["choices"]) > 0:
-        reply = result["choices"][0]["message"]["content"]
-    else:
-        reply = "⚠️ No valid response from AI"
-
-    # ✅ Send ONLY clean reply
-    return jsonify({"reply": reply})
-
-
+        return jsonify({"reply": reply})
 
     except Exception as e:
-        print("ERROR:", str(e))
-        return jsonify({"reply": f"⚠️ Server error: {str(e)}"})
+        return jsonify({"reply": f"⚠️ Error: {str(e)}"})
 
 # ✅ Run locally
 if __name__ == "__main__":
