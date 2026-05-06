@@ -55,7 +55,14 @@ def chat():
         else:
             reply = "⚠️ No valid response from AI"
 
-        return jsonify({"reply": reply})
+        # Extract reply properly
+if "choices" in result and len(result["choices"]) > 0:
+    reply = result["choices"][0]["message"]["content"]
+else:
+    reply = "⚠️ No valid response from AI"
+
+# ✅ Send ONLY clean reply
+return jsonify({"reply": reply})
 
     except Exception as e:
         print("ERROR:", str(e))
